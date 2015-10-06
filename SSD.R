@@ -1,5 +1,13 @@
 #fits an SSD to tox data
 #plots with CIs generated using a bootsrap function
+#Note that the protection values are calculated on the curve fitted to the existing data
+#Bootstrapping the curve will alter the mean values so is only for providing
+#indicative CIs
+
+#Currently the final SSD plot has the fitted data (black) and bootstrapped (red)
+#These converge as the CIs contract - generally as more data is added
+#SSDs with low n tend to be further from bootstrapped solutions so are 
+#more suspect.
 
 #read data: "val" = value used in SSD, "Species" =Species
 
@@ -17,7 +25,6 @@ text(a$val,a$prop,a$Species,cex=0.6,pos=2)
 #fit a log normal distribution
 library(MASS)
 fit <- fitdistr(a$val,"lognormal")
-fit
 
 #derive the 90th 95th and 99th % protection level
 hcs <- qlnorm(c(0.1,0.05,0.01),meanlog=fit$estimate[1],
@@ -33,20 +40,26 @@ hcs
 
 myboot<-function(fit,p) {
   #resample from fitted distribution
+  #generate random values in the distribution 
+  #(same number as originally used)
   xr <- rlnorm(fit$n,meanlog=fit$estimate[1],
                sdlog=fit$estimate[2])
   #fit distribution to new data
   fitr<-fitdistr(xr,"lognormal")
-  #return HCp
+  #find the quantiles from the new fitted distrbution
+  #and return the value at probability p
   hc5r<-qlnorm(p,meanlog=fitr$estimate[1],
                sdlog=fitr$estimate[2])
   return(hc5r)
 }
 
-#Repeat this function a large number of times (1000) and
+#Repeat this function a large number of times (1000)
+#Each repeat gives a value for the value for the pth percentile
+#So can generate at list of the values of that percentile
 #get the quantiles of the bootstrapped values
+#This gives the average (50th percentile), and CIS (2.5th and 97.5th percentiles)
 
-set.seed(1234)
+set.seed(-123)
 hc1_booted<-replicate(1000,myboot(fit,p=0.01))
 hc1_booted_CIS<-quantile(hc1_booted,probs=c(0.025,0.5,0.975))
 
@@ -57,43 +70,36 @@ hc10_booted<-replicate(1000,myboot(fit,p=0.1))
 hc10_booted_CIS<-quantile(hc10_booted,probs=c(0.025,0.5,0.975))
 
 #Tabulate as protection levels
-protValTab<-as.data.frame(rbind(hc1_booted_CIS,hc5_booted_CIS,hc10_booted_CIS))
+protValTab<-as.data.frame(rbind(hc10_booted_CIS,hc5_booted_CIS,hc1_booted_CIS))
 row.names(protValTab)<-c("99%", "95%", "90%")
 
-
-#Return table of Protection Levels
-protValTab
-
 #Now to plot this
-
 #first we need the data for the curve
 
-myboot2<-function(fit,newxs) {
+myboot2<-function(fit2,newxs) {
   #first resample again
-  xr<-rlnorm(fit$n,meanlog=fit$estimate[1],
-           sdlog=fit$estimate[2])
-  #fit
+  #generate a random set of points along the curve
+  xr<-rlnorm(fit$n,meanlog=fit2$estimate[1],
+           sdlog=fit2$estimate[2])
+  #fit a log normal distribution to those random points
   fitr<-fitdistr(xr,"lognormal")
-  #predict for new data
+  #calculate the y-value for each x in newxs based on this fit
   pyr<-plnorm(newxs,meanlog=fitr$estimate[1],
               sdlog=fitr$estimate[2])
   return(pyr)
 }
 
-#new data to predict
+#create a list of x values along which to calculate the curve
 newxs <- 10^(seq(log10(0.01),log10(max(a$val)+1000000),
-                 length.out=10000))
-boots<-replicate(10000,myboot2(fit,newxs))
+                 length.out=1000))
+#Run the above function 1000 times. Each time will add a set of y values for each
+#x in newxs - so 1000 sets of data.
+boots<-replicate(1000,myboot2(fit,newxs))
 
-#now create the data frame for the plot
-library(reshape2)
-bootdat<-data.frame(boots)
-bootdat$newxs<-newxs
-bootdat<-melt(bootdat,id="newxs")
-
-#extract the CIs to plot
-cis<-apply(boots,1,quantile,c(0.025,0.975))
-rownames(cis)<-c("lwr","upr")
+#extract the mean and CIs to plot
+#this asks for the 2.5 and 97.5 percentile for each x across all 1000 datasets in BOOTS
+cis<-apply(boots,1,quantile,c(0.025,0.5,0.975))
+rownames(cis)<-c("lwr","mean","upr")
 
 #add the fitted values to a new dataframe
 pdat<-data.frame(newxs,
@@ -111,7 +117,8 @@ Juvenile<-a[which(a$Life.stage == "Juvenile"),]
 adult<-a[which(a$Life.stage == "adult"),]
 
 # x coordinates for species names
-a$Fitted <- 10^(log10(qlnorm(a$prop, meanlog = fit$estimate[1], sdlog = fit$estimate[2])) -0.4)
+a$Fitted <- 10^(log10(qlnorm(a$prop, meanlog = fit$estimate[1], 
+                             sdlog = fit$estimate[2])) -0.4)
 
 #plot
 plot(eggs$val,eggs$prop,
@@ -126,6 +133,9 @@ points(adult$val,adult$prop,pch=6)
 lines(pdat$newxs,pdat$py,type="l")
 lines(pdat$newxs,pdat$lwr,type="l",lty=2)
 lines(pdat$newxs,pdat$upr,type="l",lty=2)
+lines(pdat$newxs,pdat$mean,type="l",col="red")
 
 legend(0.1,1,c("Eggs","Larvae","Juveniles","Adults"),pch=c(0,1,2,6),bty="n")
 
+mySumm<-list(DataFit=fit,FittedPVs=hcs,BootstrappedPVs=protValTab)
+mySumm
