@@ -10,6 +10,6 @@ Code returns:
 <li> A plot of the data broken by a factor, the bootstrapped lognormal fit to the data and 95% confidence intervals.</li>
  
 
-Sample data is contained in the file LC50.csv
+Sample data is contained in the file LC50.csv collated by Amelia Wenger
 
 Written by C.Rawson based on code from Eduard Szocs (http://edild.github.io/ssd/)
