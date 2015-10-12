@@ -71,6 +71,7 @@ hc10_booted_CIS<-quantile(hc10_booted,probs=c(0.025,0.5,0.975))
 
 #Tabulate as protection levels
 protValTab<-as.data.frame(rbind(hc10_booted_CIS,hc5_booted_CIS,hc1_booted_CIS))
+colnames(protValTab)<-c("2.5% CI","Central","97.5% CI")
 row.names(protValTab)<-c("99%", "95%", "90%")
 
 #Now to plot this
@@ -141,4 +142,20 @@ legend(0.1,1,c("Eggs","Larvae","Juveniles","Adults","Fitted","Bootstrapped"),
 
 #create a list of outputs and return
 mySumm<-list(DataFit=fit,FittedPVs=hcs,BootstrappedPVs=protValTab)
+
+#Create a generc function to print some sensible results
+class(mySumm)<-"SSDSummary"
+print.SSDSummary<-function(x,...) {
+  cat("SSD Summary","\n\n")
+  cat("Log-normal parameters","\n")
+  print(x$DataFit)
+  cat("\n\n","Fitted Protection Values","\n")
+  cat("90%", x$FittedPVs[1],"\n")
+  cat("95%", x$FittedPVs[2],"\n")
+  cat("99%", x$FittedPVs[3],"\n\n")
+  cat("Bootstrapped protection Values","\n")
+  print(x$BootstrappedPVs,...)
+}
+
+#Return results
 mySumm
