@@ -135,7 +135,9 @@ lines(pdat$newxs,pdat$lwr,type="l",lty=2)
 lines(pdat$newxs,pdat$upr,type="l",lty=2)
 lines(pdat$newxs,pdat$mean,type="l",col="red")
 
-legend(0.1,1,c("Eggs","Larvae","Juveniles","Adults"),pch=c(0,1,2,6),bty="n")
+legend(0.1,1,c("Eggs","Larvae","Juveniles","Adults","Fitted","Bootstrapped"),
+       pch=c(0,1,2,6, NA, NA),lty=c(NA,NA,NA,NA,1,1),
+       col=c("black", "black","black","black","black","red"),bty="n")
 
 mySumm<-list(DataFit=fit,FittedPVs=hcs,BootstrappedPVs=protValTab)
 mySumm
