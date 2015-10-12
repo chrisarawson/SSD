@@ -9,6 +9,8 @@ Code returns:
 <li> A plot of the data points so the user can check for doubles etc</li>
 <li> A plot of the data broken by a factor, the bootstrapped lognormal fit to the data and 95% confidence intervals.</li>
  
+Also generated is an object <b>mySumm</b> that summarises the output.
+Calling >mySumm will output the summary.
 
 Sample data is contained in the file LC50.csv collated by Amelia Wenger
 
