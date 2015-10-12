@@ -139,5 +139,6 @@ legend(0.1,1,c("Eggs","Larvae","Juveniles","Adults","Fitted","Bootstrapped"),
        pch=c(0,1,2,6, NA, NA),lty=c(NA,NA,NA,NA,1,1),
        col=c("black", "black","black","black","black","red"),bty="n")
 
+#create a list of outputs and return
 mySumm<-list(DataFit=fit,FittedPVs=hcs,BootstrappedPVs=protValTab)
 mySumm
